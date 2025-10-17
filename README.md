@@ -4,14 +4,14 @@ A collection of protobuf plugins and annotations for Frontier Technologies.
 
 ## Plugins
 
-### protoc-gen-dynamo
+### protoc-gen-go-dynamo
 
 A protoc plugin that adds DynamoDB struct tags to generated Go protobuf code.
 
 #### Installation
 
 ```bash
-go install github.com/getfrontierhq/buf-plugins/cmd/protoc-gen-dynamo@latest
+go install github.com/getfrontierhq/buf-plugins/cmd/protoc-gen-go-dynamo@latest
 ```
 
 #### Usage
@@ -31,12 +31,12 @@ syntax = "proto3";
 import "dynamo/annotations.proto";
 
 message User {
-  string id = 1 [(dynamo.key) = "ID,hash"];
+  string id = 1 [(dynamo.key) = {type: KEY_TYPE_HASH, column_name: "ID"}];
   string email = 2 [
-    (dynamo.key) = "email",
-    (dynamo.gsi) = "email-index,hash"
+    (dynamo.key) = {column_name: "email"},
+    (dynamo.gsi) = {name: "email-index", key: KEY_TYPE_HASH}
   ];
-  int64 created_at = 3 [(dynamo.key) = "range"];
+  int64 created_at = 3 [(dynamo.key) = {type: KEY_TYPE_RANGE}];
 }
 ```
 
@@ -45,7 +45,7 @@ message User {
 ```yaml
 version: v2
 plugins:
-  - local: protoc-gen-dynamo
+  - local: protoc-gen-go-dynamo
     out: gen/go
     opt:
       - paths=source_relative
@@ -62,46 +62,135 @@ buf generate
 
 ##### (dynamo.key)
 
-Primary table key annotation.
+Primary table key annotation using `KeyConfig` message.
 
-Format: `"column_name,key_type"` or `"key_type"` or `"column_name"`
-
-- `key_type`: `"hash"` (partition key) or `"range"` (sort key)
+- `type`: `KEY_TYPE_HASH` (partition key) or `KEY_TYPE_RANGE` (sort key)
 - `column_name`: DynamoDB column name (optional)
 
 Examples:
-- `[(dynamo.key) = "ID,hash"]` → `` `dynamo:"ID,hash"` ``
-- `[(dynamo.key) = "range"]` → `` `dynamo:",range"` ``
-- `[(dynamo.key) = "email"]` → `` `dynamo:"email"` ``
+- `[(dynamo.key) = {type: KEY_TYPE_HASH, column_name: "ID"}]` → `` `dynamo:"ID,hash"` ``
+- `[(dynamo.key) = {type: KEY_TYPE_RANGE}]` → `` `dynamo:",range"` ``
+- `[(dynamo.key) = {column_name: "email"}]` → `` `dynamo:"email"` ``
 
 ##### (dynamo.gsi)
 
-Global Secondary Index annotation (repeatable).
+Global Secondary Index annotation using `IndexConfig` message (repeatable).
 
-Format: `"index_name,key_type"`
+- `name`: Index name (required)
+- `key`: `KEY_TYPE_HASH` or `KEY_TYPE_RANGE`
 
-- `index_name`: Name of the GSI (required)
-- `key_type`: `"hash"` or `"range"`
-
-Example:
-- `[(dynamo.gsi) = "email-index,hash"]` → `` `index:"email-index,hash"` ``
+Examples:
+- `[(dynamo.gsi) = {name: "email-index", key: KEY_TYPE_HASH}]` → `` `index:"email-index,hash"` ``
 
 Multiple GSIs on one field:
 ```protobuf
 string email = 1 [
-  (dynamo.gsi) = "email-index,hash",
-  (dynamo.gsi) = "secondary-email-index,range"
+  (dynamo.gsi) = {name: "email-index", key: KEY_TYPE_HASH},
+  (dynamo.gsi) = {name: "secondary-index", key: KEY_TYPE_RANGE}
 ];
 ```
 
 ##### (dynamo.lsi)
 
-Local Secondary Index annotation (repeatable).
+Local Secondary Index annotation using `IndexConfig` message (repeatable).
 
-Format: Same as GSI
+Same format as GSI.
 
 Example:
-- `[(dynamo.lsi) = "timestamp-index,range"]` → `` `localIndex:"timestamp-index,range"` ``
+- `[(dynamo.lsi) = {name: "timestamp-index", key: KEY_TYPE_RANGE}]` → `` `localIndex:"timestamp-index,range"` ``
+
+---
+
+### protoc-gen-go-http
+
+A protoc plugin that generates HTTP client and server handlers from `google.api.http` annotations.
+
+#### Installation
+
+```bash
+go install github.com/getfrontierhq/buf-plugins/cmd/protoc-gen-go-http@latest
+```
+
+#### Usage
+
+1. Add the proto dependency to your `buf.yaml`:
+
+```yaml
+deps:
+  - buf.build/googleapis/googleapis
+```
+
+2. Import and use annotations in your proto files:
+
+```protobuf
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+
+service UserService {
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {
+    option (google.api.http) = {
+      get: "/v1/users/{user_id}"
+    };
+  }
+
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
+    option (google.api.http) = {
+      post: "/v1/users"
+      body: "*"
+    };
+  }
+}
+```
+
+3. Configure the plugin in your `buf.gen.yaml`:
+
+```yaml
+version: v2
+plugins:
+  - local: protoc-gen-go-http
+    out: gen/go
+    opt:
+      - paths=source_relative
+```
+
+4. Generate:
+
+```bash
+buf generate
+```
+
+The plugin generates:
+- HTTP handler registration functions
+- Route binding code
+- Request/response encoding/decoding
+
+#### Runtime Library
+
+The generated code requires the runtime library:
+
+```bash
+go get github.com/getfrontierhq/buf-plugins/internal/gohttp
+```
+
+Use in your server:
+
+```go
+import (
+  "github.com/go-chi/chi/v5"
+  pb "your/generated/proto"
+)
+
+r := chi.NewRouter()
+pb.RegisterUserServiceHTTPServer(r, yourService)
+```
+
+---
+
+## Proto Definitions
+
+All proto annotations are published to:
+- **BSR**: `buf.build/getfrontierhq/public-apis`
 
 ## License
 
