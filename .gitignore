@@ -13,7 +13,7 @@ go.work
 go.work.sum
 
 # Generated files
-gen/
+# gen/ - Intentionally committed for plugin to use
 
 # IDE
 .idea/
