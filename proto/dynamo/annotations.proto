@@ -1,0 +1,89 @@
+// Copyright 2024 Frontier Technologies Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// DynamoDB annotations for generating Go struct tags.
+//
+// This package provides protobuf field options for annotating messages with
+// DynamoDB-specific metadata. The protoc-gen-dynamo plugin reads these
+// annotations and generates appropriate struct tags in the Go code.
+//
+// # Usage
+//
+// Import the annotations in your proto file:
+//
+//   import "dynamo/annotations.proto";
+//
+// Annotate your message fields:
+//
+//   message User {
+//     string id = 1 [(dynamo.key) = "ID,hash"];
+//     string email = 2 [
+//       (dynamo.key) = "email",
+//       (dynamo.gsi) = "email-index,hash"
+//     ];
+//     int64 created_at = 3 [(dynamo.key) = "range"];
+//   }
+//
+// The plugin generates Go code with struct tags:
+//
+//   type User struct {
+//     Id        string `protobuf:"..." json:"..." dynamo:"ID,hash"`
+//     Email     string `protobuf:"..." json:"..." dynamo:"email" index:"email-index,hash"`
+//     CreatedAt int64  `protobuf:"..." json:"..." dynamo:",range"`
+//   }
+//
+// # Annotation Format
+//
+// (dynamo.key) - Primary table key
+//   Format: "column_name,key_type" or "key_type" or "column_name"
+//   - key_type: "hash" (partition key) or "range" (sort key)
+//   - column_name: DynamoDB column name (optional)
+//   - Examples: "ID,hash", "range", "email"
+//
+// (dynamo.gsi) - Global Secondary Index (repeatable)
+//   Format: "index_name,key_type"
+//   - index_name: Name of the GSI (required)
+//   - key_type: "hash" or "range"
+//   - Example: "email-index,hash"
+//   - Multiple GSIs: Use multiple (dynamo.gsi) annotations
+//
+// (dynamo.lsi) - Local Secondary Index (repeatable)
+//   Format: "index_name,key_type"
+//   - Same format as GSI
+//   - Multiple LSIs: Use multiple (dynamo.lsi) annotations
+
+syntax = "proto3";
+
+package dynamo;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/getfrontierhq/buf-plugins/gen/go/dynamo";
+
+extend google.protobuf.FieldOptions {
+  // Primary table key annotation.
+  // Format: "column_name,key_type" or "key_type" or "column_name"
+  // Examples: "ID,hash", "range", "email"
+  string key = 50000;
+
+  // Global Secondary Index annotations (repeatable).
+  // Format: "index_name,key_type"
+  // Example: "email-index,hash"
+  repeated string gsi = 50001;
+
+  // Local Secondary Index annotations (repeatable).
+  // Format: "index_name,key_type"
+  // Example: "timestamp-index,range"
+  repeated string lsi = 50002;
+}
