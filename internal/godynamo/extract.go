@@ -1,15 +1,14 @@
-// Package dynamo extracts DynamoDB annotations from proto field options
+// Package godynamo extracts DynamoDB annotations from proto field options
 // and converts them into Go struct tag strings.
 package godynamo
 
 import (
 	"fmt"
-	"strings"
 
 	pgs "github.com/lyft/protoc-gen-star/v2"
 	pgsgo "github.com/lyft/protoc-gen-star/v2/lang/go"
 
-	dynamopb "github.com/getfrontierhq/buf-plugins/gen/go/dynamo"
+	dynamopb "buf.build/gen/go/getfrontierhq/public-apis/protocolbuffers/go/dynamo"
 )
 
 // DynamoTags maps message names to field names to tag strings.
@@ -55,42 +54,29 @@ func (v *tagExtractor) Extract(f pgs.File) DynamoTags {
 }
 
 // buildTagsFromField reads field options and constructs the complete tag string.
-// Example: `dynamo:"id,hash" index:"username-index,hash" index:"email-index,range"`
+// Example: `dynamo:"id,hash" index:"username-index,hash"`
 func buildTagsFromField(f pgs.Field) string {
 	var parts []string
 
-	// Check for primary key annotation
-	var keyStr string
-	if ok, _ := f.Extension(dynamopb.E_Key, &keyStr); ok && keyStr != "" {
-		tagStr := buildKeyTag(keyStr, f)
+	// Check for primary key
+	if keyCfg, err := getKeyConfig(f); err == nil && keyCfg != nil {
+		tagStr := buildKeyTag(keyCfg)
 		if tagStr != "" {
 			parts = append(parts, tagStr)
 		}
 	}
 
-	// Check for GSI annotations (now repeated)
-	var gsiStrs []string
-	if ok, _ := f.Extension(dynamopb.E_Gsi, &gsiStrs); ok {
-		for _, gsiStr := range gsiStrs {
-			if gsiStr != "" {
-				tagStr := buildIndexTag("index", gsiStr)
-				if tagStr != "" {
-					parts = append(parts, tagStr)
-				}
-			}
+	// Check for GSIs (now repeated)
+	if gsis, err := getGSIs(f); err == nil && len(gsis) > 0 {
+		for _, gsi := range gsis {
+			parts = append(parts, buildGSITag(gsi))
 		}
 	}
 
-	// Check for LSI annotations (now repeated)
-	var lsiStrs []string
-	if ok, _ := f.Extension(dynamopb.E_Lsi, &lsiStrs); ok {
-		for _, lsiStr := range lsiStrs {
-			if lsiStr != "" {
-				tagStr := buildIndexTag("localIndex", lsiStr)
-				if tagStr != "" {
-					parts = append(parts, tagStr)
-				}
-			}
+	// Check for LSIs (now repeated)
+	if lsis, err := getLSIs(f); err == nil && len(lsis) > 0 {
+		for _, lsi := range lsis {
+			parts = append(parts, buildLSITag(lsi))
 		}
 	}
 
@@ -101,55 +87,83 @@ func buildTagsFromField(f pgs.Field) string {
 	return joinParts(parts)
 }
 
-// buildKeyTag parses the key string annotation and builds a dynamo tag.
-// Format: "column_name,key_type" or "key_type" or "column_name"
-// Examples: "ID,hash", "range", "hash", "id"
-func buildKeyTag(keyStr string, f pgs.Field) string {
-	parts := strings.Split(keyStr, ",")
-
-	if len(parts) == 1 {
-		value := strings.TrimSpace(parts[0])
-
-		// If it's exactly "hash" or "range", treat as key type only
-		if value == "hash" || value == "range" {
-			return fmt.Sprintf(`dynamo:",%s"`, value)
-		}
-
-		// Otherwise treat as column name only
-		return fmt.Sprintf(`dynamo:"%s"`, value)
+func getKeyConfig(f pgs.Field) (*dynamopb.KeyConfig, error) {
+	var cfg dynamopb.KeyConfig
+	ok, err := f.Extension(dynamopb.E_Key, &cfg)
+	if err != nil || !ok {
+		return nil, err
 	}
-
-	if len(parts) == 2 {
-		// Column name and key type: "ID,hash"
-		columnName := strings.TrimSpace(parts[0])
-		keyType := strings.TrimSpace(parts[1])
-		if keyType == "hash" || keyType == "range" {
-			return fmt.Sprintf(`dynamo:"%s,%s"`, columnName, keyType)
-		}
-		// If no valid key type, just use column name
-		return fmt.Sprintf(`dynamo:"%s"`, columnName)
-	}
-
-	return ""
+	return &cfg, nil
 }
 
-// buildIndexTag parses an index string annotation and builds a tag.
-// Format: "index_name,key_type"
-// Example: "UserID-index,hash"
-func buildIndexTag(tagName, indexStr string) string {
-	parts := strings.Split(indexStr, ",")
-	if len(parts) != 2 {
+func getGSIs(f pgs.Field) ([]*dynamopb.IndexConfig, error) {
+	var cfgs []*dynamopb.IndexConfig
+	ok, err := f.Extension(dynamopb.E_Gsi, &cfgs)
+	if err != nil || !ok {
+		return nil, err
+	}
+	return cfgs, nil
+}
+
+func getLSIs(f pgs.Field) ([]*dynamopb.IndexConfig, error) {
+	var cfgs []*dynamopb.IndexConfig
+	ok, err := f.Extension(dynamopb.E_Lsi, &cfgs)
+	if err != nil || !ok {
+		return nil, err
+	}
+	return cfgs, nil
+}
+
+func buildKeyTag(cfg *dynamopb.KeyConfig) string {
+	columnName := cfg.ColumnName
+
+	switch cfg.Type {
+	case dynamopb.KeyType_KEY_TYPE_HASH:
+		return fmt.Sprintf(`dynamo:"%s,hash"`, columnName)
+	case dynamopb.KeyType_KEY_TYPE_RANGE:
+		return fmt.Sprintf(`dynamo:"%s,range"`, columnName)
+	case dynamopb.KeyType_KEY_TYPE_UNSPECIFIED:
+		// Type not specified, just output column name
+		if columnName == "" {
+			return ""
+		}
+		return fmt.Sprintf(`dynamo:"%s"`, columnName)
+	default:
 		return ""
 	}
+}
 
-	indexName := strings.TrimSpace(parts[0])
-	keyType := strings.TrimSpace(parts[1])
-
-	if indexName == "" || (keyType != "hash" && keyType != "range") {
+func buildGSITag(cfg *dynamopb.IndexConfig) string {
+	if cfg.Name == "" {
 		return ""
 	}
+	keyType := keyTypeString(cfg.Key)
+	if keyType == "" {
+		return ""
+	}
+	return fmt.Sprintf(`index:"%s,%s"`, cfg.Name, keyType)
+}
 
-	return fmt.Sprintf(`%s:"%s,%s"`, tagName, indexName, keyType)
+func buildLSITag(cfg *dynamopb.IndexConfig) string {
+	if cfg.Name == "" {
+		return ""
+	}
+	keyType := keyTypeString(cfg.Key)
+	if keyType == "" {
+		return ""
+	}
+	return fmt.Sprintf(`localIndex:"%s,%s"`, cfg.Name, keyType)
+}
+
+func keyTypeString(kt dynamopb.KeyType) string {
+	switch kt {
+	case dynamopb.KeyType_KEY_TYPE_HASH:
+		return "hash"
+	case dynamopb.KeyType_KEY_TYPE_RANGE:
+		return "range"
+	default:
+		return ""
+	}
 }
 
 func joinParts(parts []string) string {

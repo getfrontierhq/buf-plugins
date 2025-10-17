@@ -15,7 +15,7 @@
 // DynamoDB annotations for generating Go struct tags.
 //
 // This package provides protobuf field options for annotating messages with
-// DynamoDB-specific metadata. The protoc-gen-dynamo plugin reads these
+// DynamoDB-specific metadata. The protoc-gen-go-dynamo plugin reads these
 // annotations and generates appropriate struct tags in the Go code.
 //
 // # Usage
@@ -27,12 +27,12 @@
 // Annotate your message fields:
 //
 //   message User {
-//     string id = 1 [(dynamo.key) = "ID,hash"];
+//     string id = 1 [(dynamo.key) = {type: KEY_TYPE_HASH, column_name: "ID"}];
 //     string email = 2 [
-//       (dynamo.key) = "email",
-//       (dynamo.gsi) = "email-index,hash"
+//       (dynamo.key) = {column_name: "email"},
+//       (dynamo.gsi) = {name: "email-index", key: KEY_TYPE_HASH}
 //     ];
-//     int64 created_at = 3 [(dynamo.key) = "range"];
+//     int64 created_at = 3 [(dynamo.key) = {type: KEY_TYPE_RANGE}];
 //   }
 //
 // The plugin generates Go code with struct tags:
@@ -43,25 +43,23 @@
 //     CreatedAt int64  `protobuf:"..." json:"..." dynamo:",range"`
 //   }
 //
-// # Annotation Format
+// # Annotations
 //
-// (dynamo.key) - Primary table key
-//   Format: "column_name,key_type" or "key_type" or "column_name"
-//   - key_type: "hash" (partition key) or "range" (sort key)
-//   - column_name: DynamoDB column name (optional)
-//   - Examples: "ID,hash", "range", "email"
+// (dynamo.key) - Primary table key configuration
+//   Use KeyConfig message to specify the key type and optional column name.
+//   Examples:
+//     [(dynamo.key) = {type: KEY_TYPE_HASH, column_name: "ID"}]
+//     [(dynamo.key) = {type: KEY_TYPE_RANGE}]
+//     [(dynamo.key) = {column_name: "email"}]  // No key type
 //
 // (dynamo.gsi) - Global Secondary Index (repeatable)
-//   Format: "index_name,key_type"
-//   - index_name: Name of the GSI (required)
-//   - key_type: "hash" or "range"
-//   - Example: "email-index,hash"
-//   - Multiple GSIs: Use multiple (dynamo.gsi) annotations
+//   Use IndexConfig message to specify index name and key type.
+//   Example: [(dynamo.gsi) = {name: "email-index", key: KEY_TYPE_HASH}]
+//   Multiple GSIs: Use multiple (dynamo.gsi) annotations
 //
 // (dynamo.lsi) - Local Secondary Index (repeatable)
-//   Format: "index_name,key_type"
-//   - Same format as GSI
-//   - Multiple LSIs: Use multiple (dynamo.lsi) annotations
+//   Same format as GSI.
+//   Example: [(dynamo.lsi) = {name: "timestamp-index", key: KEY_TYPE_RANGE}]
 
 syntax = "proto3";
 
@@ -69,21 +67,46 @@ package dynamo;
 
 import "google/protobuf/descriptor.proto";
 
-option go_package = "github.com/getfrontierhq/buf-plugins/gen/go/dynamo";
+option go_package = "buf.build/gen/go/getfrontierhq/public-apis/protocolbuffers/go/dynamo";
+
+// KeyType specifies the type of key in DynamoDB.
+enum KeyType {
+  // Unspecified key type.
+  KEY_TYPE_UNSPECIFIED = 0;
+
+  // Partition key (HASH key).
+  KEY_TYPE_HASH = 1;
+
+  // Sort key (RANGE key).
+  KEY_TYPE_RANGE = 2;
+}
+
+// KeyConfig specifies the configuration for primary table keys.
+message KeyConfig {
+  // Key type (HASH or RANGE).
+  KeyType type = 1;
+
+  // Column name to use in the dynamo tag.
+  // If empty, uses the field name.
+  string column_name = 2;
+}
+
+// IndexConfig specifies the configuration for DynamoDB indexes.
+message IndexConfig {
+  // Index name (required).
+  string name = 1;
+
+  // Key type in this index (HASH or RANGE).
+  KeyType key = 2;
+}
 
 extend google.protobuf.FieldOptions {
   // Primary table key annotation.
-  // Format: "column_name,key_type" or "key_type" or "column_name"
-  // Examples: "ID,hash", "range", "email"
-  string key = 50000;
+  KeyConfig key = 50000;
 
   // Global Secondary Index annotations (repeatable).
-  // Format: "index_name,key_type"
-  // Example: "email-index,hash"
-  repeated string gsi = 50001;
+  repeated IndexConfig gsi = 50001;
 
   // Local Secondary Index annotations (repeatable).
-  // Format: "index_name,key_type"
-  // Example: "timestamp-index,range"
-  repeated string lsi = 50002;
+  repeated IndexConfig lsi = 50002;
 }
