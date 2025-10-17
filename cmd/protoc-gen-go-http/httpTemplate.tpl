@@ -22,15 +22,15 @@ type {{$svcType}}HTTPServer interface {
 }
 
 func Register{{$svcType}}HTTPServer(srv {{$svcType}}HTTPServer) http.Handler {
-  return pot.RegisterService(&_{{$svcType}}_HTTP_ServiceDesc, srv)
+  return gohttp.RegisterService(&_{{$svcType}}_HTTP_ServiceDesc, srv)
 }
 
 func Register{{$svcType}}HTTPServerWithChi(srv {{$svcType}}HTTPServer, router v5.Router) http.Handler {
-  return pot.RegisterServiceWithChi(&_{{$svcType}}_HTTP_ServiceDesc, srv, router)
+  return gohttp.RegisterServiceWithChi(&_{{$svcType}}_HTTP_ServiceDesc, srv, router)
 }
 
 {{range .Methods}}
-func _{{$svcType}}_{{.Name}}{{.Num}}_HTTP_Handler(ctx context.Context, srv interface{}, dec pot.DecoderFunc, middleware pot.MiddlewareFunc) (interface{}, error) {
+func _{{$svcType}}_{{.Name}}{{.Num}}_HTTP_Handler(ctx context.Context, srv interface{}, dec gohttp.DecoderFunc, middleware gohttp.MiddlewareFunc) (interface{}, error) {
   in := new({{.Request}})
   if err := dec(in); err != nil {
     return nil, err
@@ -45,10 +45,10 @@ func _{{$svcType}}_{{.Name}}{{.Num}}_HTTP_Handler(ctx context.Context, srv inter
 }
 {{end}}
 
-var _{{$svcType}}_HTTP_ServiceDesc = pot.ServiceDescriptor{
+var _{{$svcType}}_HTTP_ServiceDesc = gohttp.ServiceDescriptor{
   ServiceName: "{{$svcName}}",
   HandlerType: (*{{$svcType}}HTTPServer)(nil),
-  Methods: []pot.MethodDescriptor{
+  Methods: []gohttp.MethodDescriptor{
     {{- range .Methods}}
     {
       MethodName: "{{.Name}}",
