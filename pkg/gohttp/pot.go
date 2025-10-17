@@ -1,4 +1,4 @@
-package pot
+package gohttp
 
 import (
 	"context"
