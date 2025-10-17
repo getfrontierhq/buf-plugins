@@ -1,5 +1,3 @@
-buf.build/gen/go/getfrontierhq/public-apis/protocolbuffers/go v1.36.10-20251017134704-97348d25b441.1 h1:k5F0isOx1cp/lp5pwdMsVJuqEiazERSd3ckbHzhlwpY=
-buf.build/gen/go/getfrontierhq/public-apis/protocolbuffers/go v1.36.10-20251017134704-97348d25b441.1/go.mod h1:W745Y4LBhFUUgpWax3Bs/h6zFOM2CYvN/w8NCh04+Zs=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/go-chi/chi/v5 v5.2.3 h1:WQIt9uxdsAbgIYgid+BpYc+liqQZGMHRaUwp0JUcvdE=

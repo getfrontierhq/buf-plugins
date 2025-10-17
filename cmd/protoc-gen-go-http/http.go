@@ -16,10 +16,10 @@ const (
 	netHttpPackage = protogen.GoImportPath("net/http")
 	chiPackage     = protogen.GoImportPath("github.com/go-chi/chi/v5")
 	fmtPackage     = protogen.GoImportPath("fmt")
-	errorsPackage  = protogen.GoImportPath("github.com/getfrontierhq/buf-plugins/internal/gohttp/errors")
-	potPackage     = protogen.GoImportPath("github.com/getfrontierhq/buf-plugins/internal/gohttp")
-	binderPackage  = protogen.GoImportPath("github.com/getfrontierhq/buf-plugins/internal/gohttp/binder")
-	optionPackage  = protogen.GoImportPath("github.com/getfrontierhq/buf-plugins/internal/gohttp/option")
+	errorsPackage  = protogen.GoImportPath("github.com/getfrontierhq/buf-plugins/errors")
+	potPackage     = protogen.GoImportPath("github.com/getfrontierhq/buf-plugins")
+	binderPackage  = protogen.GoImportPath("github.com/getfrontierhq/buf-plugins/binder")
+	optionPackage  = protogen.GoImportPath("github.com/getfrontierhq/buf-plugins/option")
 
 	deprecationComment = "// Deprecated: Do not use."
 )

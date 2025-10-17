@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/getfrontierhq/buf-plugins/internal/gohttp/errors"
-	"github.com/getfrontierhq/buf-plugins/internal/gohttp/option"
+	"github.com/getfrontierhq/buf-plugins/errors"
+	"github.com/getfrontierhq/buf-plugins/option"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )

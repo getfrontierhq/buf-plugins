@@ -10,7 +10,6 @@ require (
 )
 
 require (
-	buf.build/gen/go/getfrontierhq/public-apis/protocolbuffers/go v1.36.10-20251017134704-97348d25b441.1 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
