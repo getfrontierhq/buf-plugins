@@ -3,7 +3,7 @@ package binder
 import (
 	"net/http"
 
-	"github.com/getfrontierhq/buf-plugins/option"
+	"github.com/getfrontierhq/buf-plugins/pkg/gohttp/option"
 )
 
 type RequestEncoder struct {
