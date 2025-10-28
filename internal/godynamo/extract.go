@@ -8,7 +8,7 @@ import (
 	pgs "github.com/lyft/protoc-gen-star/v2"
 	pgsgo "github.com/lyft/protoc-gen-star/v2/lang/go"
 
-	dynamopb "github.com/getfrontierhq/buf-plugins/gen/go/dynamo"
+	dynamopb "github.com/getfrontierhq/buf-public-apis/gen/go/dynamo"
 )
 
 // DynamoTags maps message names to field names to tag strings.

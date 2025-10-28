@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/getfrontierhq/buf-plugins/pkg/gohttp/binder"
-	potErrors "github.com/getfrontierhq/buf-plugins/pkg/gohttp/errors"
+	"github.com/getfrontierhq/buf-public-apis/pkg/gohttp/binder"
+	potErrors "github.com/getfrontierhq/buf-public-apis/pkg/gohttp/errors"
 	"github.com/go-chi/chi/v5"
 )
 

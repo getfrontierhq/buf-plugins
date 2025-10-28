@@ -2,7 +2,7 @@ version: v2
 
 modules:
   - path: proto
-    name: buf.build/getfrontierhq/public-apis
+    name: buf.build/frontier/public-apis
 
 lint:
   use:

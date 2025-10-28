@@ -312,7 +312,7 @@ const file_dynamo_annotations_proto_rawDesc = "" +
 	"\x03gsi\x12\x1d.google.protobuf.FieldOptions\x18ц\x03 \x03(\v2\x13.dynamo.IndexConfigR\x03gsi:F\n" +
 	"\x03lsi\x12\x1d.google.protobuf.FieldOptions\x18҆\x03 \x03(\v2\x13.dynamo.IndexConfigR\x03lsiB\x9c\x01\n" +
 	"\n" +
-	"com.dynamoB\x10AnnotationsProtoP\x01ZDbuf.build/gen/go/getfrontierhq/public-apis/protocolbuffers/go/dynamo\xa2\x02\x03DXX\xaa\x02\x06Dynamo\xca\x02\x06Dynamo\xe2\x02\x12Dynamo\\GPBMetadata\xea\x02\x06Dynamob\x06proto3"
+	"com.dynamoB\x10AnnotationsProtoP\x01ZDbuf.build/gen/go/frontier/public-apis/protocolbuffers/go/dynamo\xa2\x02\x03DXX\xaa\x02\x06Dynamo\xca\x02\x06Dynamo\xe2\x02\x12Dynamo\\GPBMetadata\xea\x02\x06Dynamob\x06proto3"
 
 var (
 	file_dynamo_annotations_proto_rawDescOnce sync.Once

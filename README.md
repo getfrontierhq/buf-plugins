@@ -11,7 +11,7 @@ A protoc plugin that adds DynamoDB struct tags to generated Go protobuf code.
 #### Installation
 
 ```bash
-go install github.com/getfrontierhq/buf-plugins/cmd/protoc-gen-go-dynamo@latest
+go install github.com/getfrontierhq/buf-public-apis/cmd/protoc-gen-go-dynamo@latest
 ```
 
 #### Usage
@@ -20,7 +20,7 @@ go install github.com/getfrontierhq/buf-plugins/cmd/protoc-gen-go-dynamo@latest
 
 ```yaml
 deps:
-  - buf.build/getfrontierhq/public-apis
+  - buf.build/frontier/public-apis
 ```
 
 2. Import and use the annotations in your proto files:
@@ -108,7 +108,7 @@ A protoc plugin that generates HTTP client and server handlers from `google.api.
 #### Installation
 
 ```bash
-go install github.com/getfrontierhq/buf-plugins/cmd/protoc-gen-go-http@latest
+go install github.com/getfrontierhq/buf-public-apis/cmd/protoc-gen-go-http@latest
 ```
 
 #### Usage
@@ -170,7 +170,7 @@ The plugin generates:
 The generated code requires the runtime library:
 
 ```bash
-go get github.com/getfrontierhq/buf-plugins/internal/gohttp
+go get github.com/getfrontierhq/buf-public-apis/internal/gohttp
 ```
 
 Use in your server:
@@ -190,7 +190,7 @@ pb.RegisterUserServiceHTTPServer(r, yourService)
 ## Proto Definitions
 
 All proto annotations are published to:
-- **BSR**: `buf.build/getfrontierhq/public-apis`
+- **BSR**: `buf.build/frontier/public-apis`
 
 ## License
 
